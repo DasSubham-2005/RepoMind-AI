@@ -1562,6 +1562,67 @@ div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button{
 }
 
 
+/* ===== DARK STREAMLIT WIDGET FIX ===== */
+
+/* Selectbox */
+div[data-baseweb="select"] > div {
+    background: #07152b !important;
+    border: 1px solid #244b7a !important;
+    color: #f4f7ff !important;
+    border-radius: 10px !important;
+}
+
+div[data-baseweb="select"] span {
+    color: #f4f7ff !important;
+}
+
+div[data-baseweb="select"] svg {
+    fill: #cbd5e1 !important;
+}
+
+/* File uploader */
+section[data-testid="stFileUploaderDropzone"] {
+    background: #07152b !important;
+    border: 1px dashed #24558c !important;
+    border-radius: 12px !important;
+}
+
+section[data-testid="stFileUploaderDropzone"] * {
+    color: #dbeafe !important;
+}
+
+/* Upload button */
+section[data-testid="stFileUploaderDropzone"] button {
+    background: #172554 !important;
+    color: #ffffff !important;
+    border: 1px solid #315ca8 !important;
+    border-radius: 9px !important;
+}
+
+section[data-testid="stFileUploaderDropzone"] button:hover {
+    background: #243b78 !important;
+    color: #ffffff !important;
+}
+
+/* Selectbox dropdown menu */
+div[data-baseweb="popover"] {
+    background: #07152b !important;
+}
+
+div[data-baseweb="menu"] {
+    background: #07152b !important;
+}
+
+div[data-baseweb="menu"] li {
+    background: #07152b !important;
+    color: #f4f7ff !important;
+}
+
+div[data-baseweb="menu"] li:hover {
+    background: #132a4a !important;
+    color: #ffffff !important;
+}
+
 /* ============================================================
    END
    ============================================================ */
