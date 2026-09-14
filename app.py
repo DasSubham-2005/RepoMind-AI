@@ -1623,6 +1623,62 @@ div[data-baseweb="menu"] li:hover {
     color: #ffffff !important;
 }
 
+/* ===== SIDEBAR TEXT VISIBILITY FIX ===== */
+
+[data-testid="stSidebar"] {
+    color: #e8eefc !important;
+}
+
+/* Sidebar markdown text */
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] div,
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] small {
+    color: #dbe7ff !important;
+    opacity: 1 !important;
+}
+
+/* Sidebar headings / labels */
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] h4,
+[data-testid="stSidebar"] h5,
+[data-testid="stSidebar"] h6,
+[data-testid="stSidebar"] label {
+    color: #f4f7ff !important;
+    opacity: 1 !important;
+}
+
+/* Sidebar buttons */
+[data-testid="stSidebar"] button {
+    color: #eaf2ff !important;
+}
+
+[data-testid="stSidebar"] button p,
+[data-testid="stSidebar"] button span {
+    color: #eaf2ff !important;
+    opacity: 1 !important;
+}
+
+/* Sidebar muted/helper text */
+[data-testid="stSidebar"] .caption,
+[data-testid="stSidebar"] small {
+    color: #9fb4d4 !important;
+    opacity: 1 !important;
+}
+
+/* Sidebar selectbox text */
+[data-testid="stSidebar"] div[data-baseweb="select"] span {
+    color: #f4f7ff !important;
+    opacity: 1 !important;
+}
+
+/* Prevent sidebar content from becoming faded */
+[data-testid="stSidebar"] * {
+    text-shadow: none;
+}
+
 /* ============================================================
    END
    ============================================================ */
