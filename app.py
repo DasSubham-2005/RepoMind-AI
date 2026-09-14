@@ -2232,10 +2232,7 @@ if not st.session_state.authenticated:
                         if ok:
                             st.session_state.auth_view = "login"
                             st.session_state.login_email = email
-                            st.session_state.register_name = ""
-                            st.session_state.register_email = ""
-                            st.session_state.register_password = ""
-                            st.session_state.register_confirm = ""
+                            
                             st.rerun()
                         else:
                             st.error(message)
