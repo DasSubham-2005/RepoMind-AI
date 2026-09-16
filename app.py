@@ -467,6 +467,34 @@ header[data-testid="stHeader"]{
   background:rgba(4,14,29,.62);
 }
 
+.stChatMessage p,
+.stChatMessage li,
+.stChatMessage span,
+.stChatMessage div{
+  color:#E5E7EB !important;
+}
+
+.evidence-code{
+  font:.57rem/1.5 ui-monospace,
+  SFMono-Regular,
+  Consolas,
+  monospace;
+
+  color:#F1F5F9;
+  white-space:pre-wrap;
+}
+
+.stTextInput input,
+.stTextArea textarea {
+    color: #F1F5F9 !important;
+}
+
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder {
+    color: #8EA6C9 !important;
+    opacity: 1 !important;
+}
+
 .question-header{
   margin-top:22px;
   padding:17px 20px 10px;
@@ -2001,7 +2029,7 @@ RETRIEVED CONTEXT:
             },
         ],
         temperature=0.15,
-        max_tokens=1200,
+        max_tokens=1000,
     )
 
     return response.choices[0].message.content
