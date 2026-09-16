@@ -1,6 +1,7 @@
 streamlit>=1.38
 numpy>=1.26
 sentence-transformers>=3.0
+faiss-cpu>=1.15.0
 groq>=0.11
 pypdf>=5.0
 python-dotenv>=1.0

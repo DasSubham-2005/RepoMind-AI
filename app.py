@@ -1,8 +1,3 @@
-
-# ============================================================
-# RepoMind AI — Premium Responsive RAG Codebase Assistant
-# ============================================================
-
 import io
 import os
 import re
@@ -15,6 +10,7 @@ import zipfile
 from pathlib import Path
 
 import numpy as np
+import faiss
 import streamlit as st
 from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer
@@ -23,10 +19,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ============================================================
-# 1. PAGE CONFIG
-# ============================================================
-
 st.set_page_config(
     page_title="RepoMind AI",
     page_icon="🧠",
@@ -34,19 +26,11 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ============================================================
-# 2. PREMIUM RESPONSIVE UI
-# ============================================================
 st.markdown(
     r"""
 <style>
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-
-/* ============================================================
-   ROOT
-   ============================================================ */
 
 :root{
   --bg:#020713;
@@ -62,11 +46,6 @@ st.markdown(
   --purple:#8b5cf6;
   --green:#25df9a;
 }
-
-
-/* ============================================================
-   GLOBAL
-   ============================================================ */
 
 html,
 body,
@@ -95,9 +74,6 @@ body,
     );
 }
 
-
-/* Hide Streamlit default footer/menu */
-
 #MainMenu,
 footer{
   visibility:hidden;
@@ -107,11 +83,6 @@ header[data-testid="stHeader"]{
   background:rgba(2,7,18,.72);
   backdrop-filter:blur(14px);
 }
-
-
-/* ============================================================
-   SIDEBAR
-   ============================================================ */
 
 [data-testid="stSidebar"]{
   background:
@@ -203,11 +174,6 @@ header[data-testid="stHeader"]{
   margin:4px 4px 8px;
 }
 
-
-/* ============================================================
-   MAIN
-   ============================================================ */
-
 .main-shell{
   width:100%;
   margin:0;
@@ -219,11 +185,6 @@ header[data-testid="stHeader"]{
   padding:28px 34px 48px;
   margin:0 auto;
 }
-
-
-/* ============================================================
-   HERO
-   ============================================================ */
 
 .hero{
   text-align:center;
@@ -283,11 +244,6 @@ header[data-testid="stHeader"]{
   font-size:.61rem;
   font-weight:700;
 }
-
-
-/* ============================================================
-   CARDS
-   ============================================================ */
 
 .panel{
   border:1px solid #18375f;
@@ -427,11 +383,6 @@ header[data-testid="stHeader"]{
   color:#5eeeb5;
 }
 
-
-/* ============================================================
-   CAPABILITY / MODE CARDS
-   ============================================================ */
-
 .mode-strip{
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
@@ -479,11 +430,6 @@ header[data-testid="stHeader"]{
   margin-top:2px;
 }
 
-
-/* ============================================================
-   CHAT PANEL
-   ============================================================ */
-
 .chat-panel{
   border:1px solid #18375f;
   border-radius:17px;
@@ -521,11 +467,6 @@ header[data-testid="stHeader"]{
   background:rgba(4,14,29,.62);
 }
 
-
-/* ============================================================
-   QUESTION HEADER
-   ============================================================ */
-
 .question-header{
   margin-top:22px;
   padding:17px 20px 10px;
@@ -557,13 +498,6 @@ header[data-testid="stHeader"]{
   margin-top:3px;
 }
 
-
-/* ============================================================
-   FINAL QUESTION FORM
-   ============================================================ */
-
-/* Remove Streamlit form default box */
-
 div[data-testid="stForm"]{
   width:100% !important;
 
@@ -573,13 +507,6 @@ div[data-testid="stForm"]{
   padding:0 !important;
   margin:0 !important;
 }
-
-
-/*
-   IMPORTANT:
-   Keep input + send button in ONE ROW.
-   This prevents mobile stacking.
-*/
 
 div[data-testid="stForm"] [data-testid="stHorizontalBlock"]{
   display:flex !important;
@@ -593,11 +520,6 @@ div[data-testid="stForm"] [data-testid="stHorizontalBlock"]{
   width:100% !important;
 }
 
-
-/* ============================================================
-   QUESTION INPUT COLUMN
-   ============================================================ */
-
 div[data-testid="stForm"]
 [data-testid="stHorizontalBlock"]
 > div:first-child{
@@ -608,9 +530,6 @@ div[data-testid="stForm"]
   min-width:0 !important;
 }
 
-
-/* Question input wrapper */
-
 div[data-testid="stForm"]
 div[data-testid="stTextInput"]{
 
@@ -619,17 +538,11 @@ div[data-testid="stTextInput"]{
   margin:0 !important;
 }
 
-
-/* Input inner wrapper */
-
 div[data-testid="stForm"]
 div[data-testid="stTextInput"] > div{
 
   width:100% !important;
 }
-
-
-/* Actual input */
 
 div[data-testid="stForm"]
 div[data-testid="stTextInput"] input{
@@ -667,18 +580,12 @@ div[data-testid="stTextInput"] input{
   transition:all .18s ease !important;
 }
 
-
-/* Placeholder */
-
 div[data-testid="stForm"]
 div[data-testid="stTextInput"]
 input::placeholder{
 
   color:#7189ad !important;
 }
-
-
-/* Focus */
 
 div[data-testid="stForm"]
 div[data-testid="stTextInput"]
@@ -691,11 +598,6 @@ input:focus{
     0 8px 30px rgba(43,127,255,.12) !important;
 }
 
-
-/* ============================================================
-   SEND BUTTON COLUMN
-   ============================================================ */
-
 div[data-testid="stForm"]
 [data-testid="stHorizontalBlock"]
 > div:last-child{
@@ -705,9 +607,6 @@ div[data-testid="stForm"]
   width:64px !important;
   min-width:64px !important;
 }
-
-
-/* Button container */
 
 div[data-testid="stForm"]
 div[data-testid="stFormSubmitButton"]{
@@ -720,9 +619,6 @@ div[data-testid="stFormSubmitButton"]{
 
   padding:0 !important;
 }
-
-
-/* Actual Send button */
 
 div[data-testid="stForm"]
 div[data-testid="stFormSubmitButton"]
@@ -763,9 +659,6 @@ button{
   transition:all .18s ease !important;
 }
 
-
-/* Send hover */
-
 div[data-testid="stForm"]
 div[data-testid="stFormSubmitButton"]
 button:hover{
@@ -778,11 +671,6 @@ button:hover{
     0 12px 32px rgba(43,104,255,.32) !important;
 }
 
-
-/* ============================================================
-   CHAT / FORM SPACING
-   ============================================================ */
-
 div[data-testid="stForm"] > div{
   gap:8px !important;
 }
@@ -790,11 +678,6 @@ div[data-testid="stForm"] > div{
 .chat-panel + div{
   margin-top:16px !important;
 }
-
-
-/* ============================================================
-   STREAMLIT CONTROLS
-   ============================================================ */
 
 .stButton>button{
 
@@ -846,11 +729,6 @@ button[kind="primary"]{
   color:#f7fbff!important;
 }
 
-
-/* ============================================================
-   FILE UPLOADER
-   ============================================================ */
-
 [data-testid="stFileUploader"]{
 
   background:rgba(4,14,30,.55)!important;
@@ -892,11 +770,6 @@ button[kind="primary"]{
   color:#dce7f9!important;
 }
 
-
-/* ============================================================
-   EXPANDER
-   ============================================================ */
-
 div[data-testid="stExpander"]{
 
   border-color:#193b6c!important;
@@ -910,11 +783,6 @@ div[data-testid="stExpander"] summary{
 
   font-size:.68rem!important;
 }
-
-
-/* ============================================================
-   AUTHENTICATION
-   ============================================================ */
 
 .auth-spacer{
   height:34px;
@@ -1061,11 +929,6 @@ div[data-testid="stExpander"] summary{
   margin-top:16px;
 }
 
-
-/* ============================================================
-   FOOTER
-   ============================================================ */
-
 .app-footer{
 
   text-align:center;
@@ -1097,11 +960,6 @@ div[data-testid="stExpander"] summary{
 
   text-decoration:none;
 }
-
-
-/* ============================================================
-   EVIDENCE
-   ============================================================ */
 
 .evidence-title{
 
@@ -1137,11 +995,6 @@ div[data-testid="stExpander"] summary{
   margin-top:8px;
 }
 
-
-/* ============================================================
-   RESPONSIVE — TABLET
-   ============================================================ */
-
 @media(max-width:900px){
 
   .main-shell{
@@ -1162,11 +1015,6 @@ div[data-testid="stExpander"] summary{
   }
 
 }
-
-
-/* ============================================================
-   RESPONSIVE — MOBILE
-   ============================================================ */
 
 @media(max-width:650px){
 
@@ -1202,22 +1050,12 @@ div[data-testid="stExpander"] summary{
     padding:22px 16px 42px;
   }
 
-
-  /* ----------------------------------------------------------
-     Capability cards
-     ---------------------------------------------------------- */
-
   .mode-strip{
 
     grid-template-columns:repeat(2,1fr);
 
     gap:10px;
   }
-
-
-  /* ----------------------------------------------------------
-     Auth
-     ---------------------------------------------------------- */
 
   .auth-spacer{
 
@@ -1228,11 +1066,6 @@ div[data-testid="stExpander"] summary{
 
     border-radius:17px!important;
   }
-
-
-  /* ----------------------------------------------------------
-     Question input
-     ---------------------------------------------------------- */
 
   div[data-testid="stForm"]
   [data-testid="stHorizontalBlock"]{
@@ -1250,9 +1083,6 @@ div[data-testid="stExpander"] summary{
     width:100% !important;
   }
 
-
-  /* Mobile input column */
-
   div[data-testid="stForm"]
   [data-testid="stHorizontalBlock"]
   > div:first-child{
@@ -1264,9 +1094,6 @@ div[data-testid="stExpander"] summary{
     min-width:0 !important;
   }
 
-
-  /* Mobile button column */
-
   div[data-testid="stForm"]
   [data-testid="stHorizontalBlock"]
   > div:last-child{
@@ -1277,9 +1104,6 @@ div[data-testid="stExpander"] summary{
 
     min-width:58px !important;
   }
-
-
-  /* Mobile input */
 
   div[data-testid="stForm"]
   div[data-testid="stTextInput"]
@@ -1298,9 +1122,6 @@ div[data-testid="stExpander"] summary{
     box-sizing:border-box !important;
   }
 
-
-  /* Mobile send button container */
-
   div[data-testid="stForm"]
   div[data-testid="stFormSubmitButton"]{
 
@@ -1312,9 +1133,6 @@ div[data-testid="stExpander"] summary{
 
     padding:0 !important;
   }
-
-
-  /* Mobile send button */
 
   div[data-testid="stForm"]
   div[data-testid="stFormSubmitButton"]
@@ -1337,11 +1155,6 @@ div[data-testid="stExpander"] summary{
     font-size:1rem !important;
   }
 
-
-  /* ----------------------------------------------------------
-     Question header
-     ---------------------------------------------------------- */
-
   .question-header{
 
     margin-top:16px;
@@ -1359,11 +1172,6 @@ div[data-testid="stExpander"] summary{
     font-size:.55rem;
   }
 
-
-  /* ----------------------------------------------------------
-     Footer
-     ---------------------------------------------------------- */
-
   .app-footer{
 
     margin-top:22px !important;
@@ -1372,11 +1180,6 @@ div[data-testid="stExpander"] summary{
   }
 
 }
-
-
-/* ============================================================
-   VERY SMALL MOBILE
-   ============================================================ */
 
 @media(max-width:420px){
 
@@ -1389,12 +1192,10 @@ div[data-testid="stExpander"] summary{
     padding-right:10px !important;
   }
 
-
   .hero-title{
 
     font-size:2rem!important;
   }
-
 
   .mode-strip{
 
@@ -1403,33 +1204,26 @@ div[data-testid="stExpander"] summary{
     gap:8px;
   }
 
-
   .mode-card{
 
     padding:11px 10px;
   }
-
 
   .mode-name{
 
     font-size:.58rem;
   }
 
-
   .mode-text{
 
     font-size:.48rem;
   }
-
-
-  /* Question bar */
 
   div[data-testid="stForm"]
   [data-testid="stHorizontalBlock"]{
 
     gap:6px !important;
   }
-
 
   div[data-testid="stForm"]
   [data-testid="stHorizontalBlock"]
@@ -1442,7 +1236,6 @@ div[data-testid="stExpander"] summary{
     min-width:54px !important;
   }
 
-
   div[data-testid="stForm"]
   div[data-testid="stFormSubmitButton"]{
 
@@ -1450,7 +1243,6 @@ div[data-testid="stExpander"] summary{
 
     min-width:54px !important;
   }
-
 
   div[data-testid="stForm"]
   div[data-testid="stFormSubmitButton"]
@@ -1467,7 +1259,6 @@ div[data-testid="stExpander"] summary{
     border-radius:12px !important;
   }
 
-
   div[data-testid="stForm"]
   div[data-testid="stTextInput"]
   input{
@@ -1483,11 +1274,6 @@ div[data-testid="stExpander"] summary{
 
 }
 
-
-/* ============================================================
-   EXTRA SAFETY — PREVENT STREAMLIT COLUMN STACKING
-   ============================================================ */
-
 @media(max-width:650px){
 
   div[data-testid="stForm"]
@@ -1500,8 +1286,6 @@ div[data-testid="stExpander"] summary{
   }
 
 }
-
-/* FINAL SEND BUTTON HEIGHT FIX */
 
 @media(max-width:650px){
 
@@ -1520,7 +1304,6 @@ div[data-testid="stExpander"] summary{
 
 }
 
-/* Keep the question field and send button the same visible height. */
 div[data-testid="stForm"] input[type="text"]{
   height:58px !important;
   min-height:58px !important;
@@ -1554,17 +1337,12 @@ div[data-baseweb="input"]:has(input[placeholder*="Ask anything about your indexe
   box-sizing:border-box !important;
 }
 
-/* Match the send button to the input's visible native height. */
 div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button{
   height:36px !important;
   min-height:36px !important;
   border-radius:8px !important;
 }
 
-
-/* ===== DARK STREAMLIT WIDGET FIX ===== */
-
-/* Selectbox */
 div[data-baseweb="select"] > div {
     background: #07152b !important;
     border: 1px solid #244b7a !important;
@@ -1580,7 +1358,6 @@ div[data-baseweb="select"] svg {
     fill: #cbd5e1 !important;
 }
 
-/* File uploader */
 section[data-testid="stFileUploaderDropzone"] {
     background: #07152b !important;
     border: 1px dashed #24558c !important;
@@ -1591,7 +1368,6 @@ section[data-testid="stFileUploaderDropzone"] * {
     color: #dbeafe !important;
 }
 
-/* Upload button */
 section[data-testid="stFileUploaderDropzone"] button {
     background: #172554 !important;
     color: #ffffff !important;
@@ -1604,7 +1380,6 @@ section[data-testid="stFileUploaderDropzone"] button:hover {
     color: #ffffff !important;
 }
 
-/* Selectbox dropdown menu */
 div[data-baseweb="popover"] {
     background: #07152b !important;
 }
@@ -1623,13 +1398,10 @@ div[data-baseweb="menu"] li:hover {
     color: #ffffff !important;
 }
 
-/* ===== SIDEBAR TEXT VISIBILITY FIX ===== */
-
 [data-testid="stSidebar"] {
     color: #e8eefc !important;
 }
 
-/* Sidebar markdown text */
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span,
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] div,
@@ -1638,7 +1410,6 @@ div[data-baseweb="menu"] li:hover {
     opacity: 1 !important;
 }
 
-/* Sidebar headings / labels */
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
 [data-testid="stSidebar"] h3,
@@ -1650,7 +1421,6 @@ div[data-baseweb="menu"] li:hover {
     opacity: 1 !important;
 }
 
-/* Sidebar buttons */
 [data-testid="stSidebar"] button {
     color: #eaf2ff !important;
 }
@@ -1661,36 +1431,25 @@ div[data-baseweb="menu"] li:hover {
     opacity: 1 !important;
 }
 
-/* Sidebar muted/helper text */
 [data-testid="stSidebar"] .caption,
 [data-testid="stSidebar"] small {
     color: #9fb4d4 !important;
     opacity: 1 !important;
 }
 
-/* Sidebar selectbox text */
 [data-testid="stSidebar"] div[data-baseweb="select"] span {
     color: #f4f7ff !important;
     opacity: 1 !important;
 }
 
-/* Prevent sidebar content from becoming faded */
 [data-testid="stSidebar"] * {
     text-shadow: none;
 }
-
-/* ============================================================
-   END
-   ============================================================ */
 
 </style>
 """,
     unsafe_allow_html=True,
 )
-
-# ============================================================
-# 3. CONSTANTS
-# ============================================================
 
 SUPPORTED = {
     ".py", ".js", ".jsx", ".ts", ".tsx", ".java", ".c", ".cpp", ".h",
@@ -1713,10 +1472,6 @@ MODEL_OPTIONS = [
 
 DB_PATH = Path("data") / "repomind_users.db"
 DB_PATH.parent.mkdir(exist_ok=True)
-
-# ============================================================
-# 4. DATABASE + AUTHENTICATION
-# ============================================================
 
 def db():
     conn = sqlite3.connect(DB_PATH)
@@ -1744,7 +1499,6 @@ def db():
         )
     """)
 
-    # Migration for older databases.
     user_columns = {
         row[1] for row in conn.execute("PRAGMA table_info(users)").fetchall()
     }
@@ -1771,12 +1525,14 @@ def db():
 
 def hash_password(password, salt=None):
     salt = salt or secrets.token_hex(16)
+
     digest = hashlib.pbkdf2_hmac(
         "sha256",
         password.encode("utf-8"),
         salt.encode("utf-8"),
         120_000,
     ).hex()
+
     return digest, salt
 
 def valid_email(email):
@@ -1812,6 +1568,7 @@ def create_user(full_name, email, password):
         )
 
         conn.commit()
+
         return True, "Account created successfully."
 
     except sqlite3.IntegrityError:
@@ -1925,10 +1682,6 @@ def delete_chat(user_id, chat_id):
 
     conn.commit()
     conn.close()
-
-# ============================================================
-# 5. RAG CORE
-# ============================================================
 
 @st.cache_resource(show_spinner=False)
 def load_embedding_model():
@@ -2049,6 +1802,7 @@ def chunk_text(record, chunk_size=1200, overlap=180):
     chunk_id = 0
 
     while start < len(text):
+
         end = min(
             start + chunk_size,
             len(text)
@@ -2085,17 +1839,26 @@ def build_index(chunks, model):
         batch_size=32,
     )
 
-    return np.asarray(
+    embeddings = np.asarray(
         embeddings,
         dtype=np.float32
     )
 
+    index = faiss.IndexFlatIP(
+        embeddings.shape[1]
+    )
+
+    index.add(embeddings)
+
+    return index
+
 def retrieve(
     query,
     chunks,
-    embeddings,
+    vector_index,
     model,
     top_k=6,
+    similarity_threshold=0.22,
 ):
     query_embedding = model.encode(
         [query],
@@ -2103,17 +1866,41 @@ def retrieve(
         show_progress_bar=False,
     )
 
-    scores = embeddings @ query_embedding[0]
+    query_embedding = np.asarray(
+        query_embedding,
+        dtype=np.float32
+    )
 
-    order = np.argsort(scores)[::-1][:top_k]
+    search_k = min(
+        top_k,
+        len(chunks)
+    )
+
+    scores, indices = vector_index.search(
+        query_embedding,
+        search_k,
+    )
 
     results = []
 
-    for index in order:
-        item = dict(chunks[int(index)])
-        item["score"] = float(
-            scores[int(index)]
+    for score, index in zip(
+        scores[0],
+        indices[0]
+    ):
+        if index < 0:
+            continue
+
+        score = float(score)
+
+        if score < similarity_threshold:
+            continue
+
+        item = dict(
+            chunks[int(index)]
         )
+
+        item["score"] = score
+
         results.append(item)
 
     return results
@@ -2129,7 +1916,10 @@ def call_llm(
 
     context_blocks = []
 
-    for number, result in enumerate(results, start=1):
+    for number, result in enumerate(
+        results,
+        start=1
+    ):
 
         location = result["path"]
 
@@ -2156,9 +1946,15 @@ def call_llm(
             "Explain the relevant implementation, files, functions, "
             "classes, data flow and important logic. Do not invent details.",
 
-        "Architecture":
-            "Describe the repository architecture and how important "
-            "components interact. Only use retrieved evidence.",
+       "Architecture":
+           "Answer only the exact architecture question asked. "
+            "List only components explicitly named in the retrieved context. "
+            "Explain an interaction only if that interaction is explicitly described "
+            "in the retrieved context. "
+           "Do not infer a workflow or causal relationship from   component names alone. "
+           "Do not include limitations, future improvements, future vision, project goals, "
+           "author information, or unrelated sections unless explicitly requested. "
+           "Do not add any information that is not directly supported by the retrieved context.",
 
         "Debug / Diagnose":
             "Diagnose the likely issue using retrieved code. "
@@ -2210,10 +2006,6 @@ RETRIEVED CONTEXT:
 
     return response.choices[0].message.content
 
-# ============================================================
-# 6. SESSION STATE
-# ============================================================
-
 defaults = {
     "authenticated": False,
     "user": None,
@@ -2222,7 +2014,7 @@ defaults = {
     "current_chat_id": None,
     "messages": [],
     "chunks": [],
-    "embeddings": None,
+    "vector_index": None,
     "indexed_files": [],
     "last_results": [],
 }
@@ -2230,10 +2022,6 @@ defaults = {
 for key, value in defaults.items():
     if key not in st.session_state:
         st.session_state[key] = value
-
-# ============================================================
-# 7. FOOTER
-# ============================================================
 
 def render_footer():
     st.markdown(
@@ -2256,19 +2044,21 @@ def render_footer():
         unsafe_allow_html=True,
     )
 
-# ============================================================
-# 8. LOGIN / REGISTER PAGE
-# ============================================================
-
 if not st.session_state.authenticated:
 
-    # Centered auth layout — uses real Streamlit containers so widgets stay
-    # inside the card instead of breaking raw HTML nesting.
-    st.markdown('<div class="auth-spacer"></div>', unsafe_allow_html=True)
-    left, center, right = st.columns([1.15, 1.0, 1.15])
+    st.markdown(
+        '<div class="auth-spacer"></div>',
+        unsafe_allow_html=True
+    )
+
+    left, center, right = st.columns(
+        [1.15, 1.0, 1.15]
+    )
 
     with center:
+
         with st.container(border=True):
+
             st.markdown(
                 """
                 <div class="auth-logo">🧠</div>
@@ -2279,84 +2069,150 @@ if not st.session_state.authenticated:
             )
 
             if st.session_state.auth_view == "login":
-                st.markdown('<div class="auth-heading">Welcome back</div>', unsafe_allow_html=True)
+
+                st.markdown(
+                    '<div class="auth-heading">Welcome back</div>',
+                    unsafe_allow_html=True
+                )
 
                 email = st.text_input(
                     "Gmail",
                     placeholder="you@gmail.com",
                     key="login_email",
                 )
+
                 password = st.text_input(
                     "Password",
                     type="password",
                     key="login_password",
                 )
 
-                if st.button("Enter RepoMind", type="primary", use_container_width=True):
+                if st.button(
+                    "Enter RepoMind",
+                    type="primary",
+                    use_container_width=True
+                ):
+
                     if not email or not password:
-                        st.warning("Enter your Gmail and password.")
+
+                        st.warning(
+                            "Enter your Gmail and password."
+                        )
+
                     else:
-                        user = authenticate(email, password)
+
+                        user = authenticate(
+                            email,
+                            password
+                        )
+
                         if user:
+
                             st.session_state.authenticated = True
                             st.session_state.user = user
-                            st.session_state.chats = load_chats(user["id"])
+                            st.session_state.chats = load_chats(
+                                user["id"]
+                            )
                             st.session_state.messages = []
                             st.session_state.current_chat_id = None
                             st.session_state.chunks = []
-                            st.session_state.embeddings = None
+                            st.session_state.vector_index = None
                             st.session_state.indexed_files = []
                             st.session_state.last_results = []
+
                             st.rerun()
+
                         else:
-                            st.error("Invalid Gmail or password.")
 
-                st.markdown('<div class="auth-divider">or</div>', unsafe_allow_html=True)
+                            st.error(
+                                "Invalid Gmail or password."
+                            )
 
-                if st.button("Create a new account", use_container_width=True):
+                st.markdown(
+                    '<div class="auth-divider">or</div>',
+                    unsafe_allow_html=True
+                )
+
+                if st.button(
+                    "Create a new account",
+                    use_container_width=True
+                ):
+
                     st.session_state.auth_view = "register"
                     st.rerun()
 
             else:
-                st.markdown('<div class="auth-heading">Create your account</div>', unsafe_allow_html=True)
+
+                st.markdown(
+                    '<div class="auth-heading">Create your account</div>',
+                    unsafe_allow_html=True
+                )
 
                 full_name = st.text_input(
                     "Full name",
                     placeholder="Subham Das",
                     key="register_name",
                 )
+
                 email = st.text_input(
                     "Gmail",
                     placeholder="you@gmail.com",
                     key="register_email",
                 )
+
                 password = st.text_input(
                     "Password",
                     type="password",
                     key="register_password",
                 )
+
                 confirm = st.text_input(
                     "Confirm password",
                     type="password",
                     key="register_confirm",
                 )
 
-                if st.button("Create account", type="primary", use_container_width=True):
+                if st.button(
+                    "Create account",
+                    type="primary",
+                    use_container_width=True
+                ):
+
                     if password != confirm:
-                        st.error("Passwords do not match.")
+
+                        st.error(
+                            "Passwords do not match."
+                        )
+
                     else:
-                        ok, message = create_user(full_name, email, password)
+
+                        ok, message = create_user(
+                            full_name,
+                            email,
+                            password
+                        )
+
                         if ok:
+
                             st.session_state.auth_view = "login"
                             st.session_state.login_email = email
-                            
+
                             st.rerun()
+
                         else:
+
                             st.error(message)
 
-                st.markdown('<div class="auth-divider">or</div>', unsafe_allow_html=True)
+                st.markdown(
+                    '<div class="auth-divider">or</div>',
+                    unsafe_allow_html=True
+                )
 
-                if st.button("← Back to login", use_container_width=True):
+                if st.button(
+                    "← Back to login",
+                    use_container_width=True
+                ):
+
                     st.session_state.auth_view = "login"
                     st.rerun()
 
@@ -2372,20 +2228,12 @@ if not st.session_state.authenticated:
     render_footer()
     st.stop()
 
-# ============================================================
-# 9. AUTHENTICATED APP DATA
-# ============================================================
-
 api_key = os.getenv(
     "GROQ_API_KEY",
     ""
 )
 
 user = st.session_state.user
-
-# ============================================================
-# 10. SIDEBAR
-# ============================================================
 
 with st.sidebar:
 
@@ -2429,9 +2277,11 @@ with st.sidebar:
         "＋ New Chat",
         use_container_width=True,
     ):
+
         st.session_state.current_chat_id = None
         st.session_state.messages = []
         st.session_state.last_results = []
+
         st.rerun()
 
     st.markdown(
@@ -2452,21 +2302,26 @@ with st.sidebar:
             )
 
             with col1:
+
                 if st.button(
                     title or "New conversation",
                     key=f"chat_{chat['id']}",
                     use_container_width=True,
                 ):
+
                     st.session_state.current_chat_id = chat["id"]
                     st.session_state.messages = chat["messages"]
                     st.session_state.last_results = []
+
                     st.rerun()
 
             with col2:
+
                 if st.button(
                     "×",
                     key=f"delete_{chat['id']}",
                 ):
+
                     delete_chat(
                         user["id"],
                         chat["id"],
@@ -2480,12 +2335,14 @@ with st.sidebar:
                         st.session_state.current_chat_id
                         == chat["id"]
                     ):
+
                         st.session_state.current_chat_id = None
                         st.session_state.messages = []
 
                     st.rerun()
 
     else:
+
         st.caption(
             "No conversations yet."
         )
@@ -2544,10 +2401,13 @@ with st.sidebar:
     st.divider()
 
     if api_key:
+
         st.success(
             "Groq API configured"
         )
+
     else:
+
         st.warning(
             "GROQ_API_KEY not found"
         )
@@ -2570,11 +2430,6 @@ with st.sidebar:
 
         st.rerun()
 
-# ============================================================
-# ============================================================
-# 11. MAIN APP
-# ============================================================
-
 st.markdown(
     """
     <div class="hero">
@@ -2591,7 +2446,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------- Upload ----------
 st.markdown(
     """
     <div class="panel upload-panel">
@@ -2630,36 +2484,85 @@ st.markdown(
 )
 
 if uploads:
-    if st.button("🚀 Build RAG Index", type="primary", use_container_width=True):
-        with st.spinner("Reading files → chunking → generating embeddings..."):
+
+    if st.button(
+        "🚀 Build RAG Index",
+        type="primary",
+        use_container_width=True
+    ):
+
+        with st.spinner(
+            "Reading files → chunking → generating embeddings..."
+        ):
+
             records = []
+
             for file in uploads:
-                extension = Path(file.name).suffix.lower()
+
+                extension = Path(
+                    file.name
+                ).suffix.lower()
+
                 if extension == ".zip":
-                    records.extend(extract_zip(file))
+
+                    records.extend(
+                        extract_zip(file)
+                    )
+
                 elif extension == ".pdf":
-                    records.extend(extract_pdf(file))
+
+                    records.extend(
+                        extract_pdf(file)
+                    )
+
                 else:
-                    records.extend(extract_single_code(file))
+
+                    records.extend(
+                        extract_single_code(file)
+                    )
 
             chunks = []
+
             for record in records:
-                chunks.extend(chunk_text(record, chunk_size, overlap))
+
+                chunks.extend(
+                    chunk_text(
+                        record,
+                        chunk_size,
+                        overlap
+                    )
+                )
 
             if not chunks:
-                st.error("No supported readable files were found.")
-            else:
-                model = load_embedding_model()
-                embeddings = build_index(chunks, model)
-                st.session_state.chunks = chunks
-                st.session_state.embeddings = embeddings
-                st.session_state.indexed_files = sorted(
-                    set(record["path"] for record in records)
+
+                st.error(
+                    "No supported readable files were found."
                 )
+
+            else:
+
+                model = load_embedding_model()
+
+                vector_index = build_index(
+                    chunks,
+                    model
+                )
+
+                st.session_state.chunks = chunks
+
+                st.session_state.vector_index = vector_index
+
+                st.session_state.indexed_files = sorted(
+                    set(
+                        record["path"]
+                        for record in records
+                    )
+                )
+
                 st.session_state.last_results = []
+
                 st.rerun()
 
-# ---------- Workspace ----------
 st.markdown(
     '<div class="section-row"><div class="section-title">Repository workspace</div>'
     '<div class="section-note">Your active session</div></div>',
@@ -2667,8 +2570,14 @@ st.markdown(
 )
 
 if st.session_state.chunks:
-    files_count = len(st.session_state.indexed_files)
-    chunks_count = len(st.session_state.chunks)
+
+    files_count = len(
+        st.session_state.indexed_files
+    )
+
+    chunks_count = len(
+        st.session_state.chunks
+    )
 
     st.markdown(
         f"""
@@ -2688,7 +2597,9 @@ if st.session_state.chunks:
         """,
         unsafe_allow_html=True,
     )
+
 else:
+
     st.markdown(
         """
         <div class="workspace">
@@ -2699,7 +2610,6 @@ else:
         unsafe_allow_html=True,
     )
 
-# ---------- Capabilities ----------
 st.markdown(
     '<div class="section-row"><div class="section-title">What RepoMind can do</div></div>',
     unsafe_allow_html=True,
@@ -2717,12 +2627,14 @@ cards_html = '<div class="mode-strip">' + ''.join(
     f'<div class="mode-name">{name}</div><div class="mode-text">{description}</div></div>'
     for icon, name, description in capabilities
 ) + '</div>'
-st.markdown(cards_html, unsafe_allow_html=True)
 
-# ---------- Chat ----------
+st.markdown(
+    cards_html,
+    unsafe_allow_html=True
+)
+
 if st.session_state.chunks:
 
-    # ---------- Ask RepoMind ----------
     st.markdown(
        """
        <div class="question-header">
@@ -2733,106 +2645,194 @@ if st.session_state.chunks:
       unsafe_allow_html=True,
     )
 
-    with st.form("repo_question_form", clear_on_submit=True):
+    if st.session_state.messages:
+       for message in st.session_state.messages:
+          with st.chat_message(message["role"]):
+             st.markdown(message["content"])
 
-       question_col, button_col = st.columns(
-           [8, 1])
+    with st.form(
+        "repo_question_form",
+        clear_on_submit=True
+    ):
 
-       with question_col:
-           question = st.text_input(
-              "Question",
-               placeholder="Ask anything about your indexed repository…",
-               label_visibility="collapsed",
-           )
+        question_col, button_col = st.columns(
+            [8, 1]
+        )
 
-       with button_col:
-          submit = st.form_submit_button(
-              "➤",
-              use_container_width=True,
-          )
+        with question_col:
 
+            question = st.text_input(
+                "Question",
+                placeholder="Ask anything about your indexed repository…",
+                label_visibility="collapsed",
+            )
 
-    
+        with button_col:
 
-    
-
-    
+            submit = st.form_submit_button(
+                "➤",
+                use_container_width=True,
+            )
 
     if submit and question.strip():
+
         question = question.strip()
+
         model = load_embedding_model()
 
         results = retrieve(
             question,
             st.session_state.chunks,
-            st.session_state.embeddings,
+            st.session_state.vector_index,
             model,
             top_k,
+            similarity_threshold=0.22,
         )
 
         st.session_state.last_results = results
-        st.session_state.messages.append({"role": "user", "content": question})
+
+        st.session_state.messages.append({
+            "role": "user",
+            "content": question
+        })
 
         answer = ""
-        if not api_key:
-            answer = "I can retrieve semantic evidence, but a Groq API key is not configured."
-        else:
-            with st.spinner("Analyzing repository evidence..."):
-                try:
-                    answer = call_llm(api_key, model_name, question, results, mode)
-                except Exception as error:
-                    answer = f"LLM error: {error}"
 
-        st.session_state.messages.append({"role": "assistant", "content": answer})
-        title = question.replace("\n", " ")[:55] or "New conversation"
-        new_id = save_chat(
-            user["id"], st.session_state.current_chat_id, title, st.session_state.messages
-        )
-        st.session_state.current_chat_id = new_id
-        st.session_state.chats = load_chats(user["id"])
-        st.rerun()
+        if not results:
 
-    st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
-
-# ---------- Evidence ----------
-if st.session_state.last_results:
-
-    st.markdown(
-        '<div class="section-row"><div class="section-title">📚 Retrieved evidence</div>'
-        '<div class="section-note">Top semantic matches</div></div>',
-        unsafe_allow_html=True,
-    )
-
-    for number, result in enumerate(st.session_state.last_results, start=1):
-        location = result["path"]
-        if result.get("page"):
-            location += f" · Page {result['page']}"
-
-        preview = result["chunk"][:900]
-        if len(result["chunk"]) > 900:
-            preview += "..."
-
-        safe_location = html.escape(location)
-        safe_preview = html.escape(preview)
-
-        with st.container(border=True):
-            st.markdown(
-                f"""
-                <div class="evidence-title">{number}. {safe_location}</div>
-                <div class="evidence-meta">Semantic relevance · {result["score"]:.3f}</div>
-                <div class="evidence-code">{safe_preview}</div>
-                """,
-                unsafe_allow_html=True,
+            answer = (
+                "I couldn't find enough evidence "
+                "in the indexed repository."
             )
 
-# ---------- Indexed files ----------
-if st.session_state.indexed_files:
-    with st.expander("📂 View indexed files"):
-        for filename in st.session_state.indexed_files:
-            st.write(f"• {filename}")
+        elif not api_key:
 
-# ============================================================
-# 19. FOOTER
-# ============================================================
+            answer = (
+                "I can retrieve semantic evidence, "
+                "but a Groq API key is not configured."
+            )
+
+        else:
+
+            with st.spinner(
+                "Analyzing repository evidence..."
+            ):
+
+                try:
+                    
+
+                    answer = call_llm(
+                        api_key,
+                        model_name,
+                        question,
+                        results,
+                        mode
+                    )
+                    if answer is None:
+                        answer = ""
+
+                    answer = str(answer).strip()
+
+                    if not answer:
+                        answer = "I couldn't find enough evidence in the indexed repository."
+
+                except Exception as error:
+
+                    answer = f"LLM error: {error}"
+                    
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        title = (
+            question.replace("\n", " ")[:55]
+            or "New conversation"
+        )
+
+        new_id = save_chat(
+            user["id"],
+            st.session_state.current_chat_id,
+            title,
+            st.session_state.messages
+        )
+
+        st.session_state.current_chat_id = new_id
+
+        st.session_state.chats = load_chats(
+            user["id"]
+        )
+
+        st.rerun()
+
+    st.markdown(
+        "<div style='height:4px'></div>",
+        unsafe_allow_html=True
+    )
+
+
+
+if st.session_state.last_results:
+
+    with st.expander(
+        "📚 View Evidence",
+        expanded=False
+    ):
+
+        st.markdown(
+            '<div class="section-row"><div class="section-title">Retrieved evidence</div>'
+            '<div class="section-note">Top semantic matches</div></div>',
+            unsafe_allow_html=True,
+        )
+
+        for number, result in enumerate(
+            st.session_state.last_results,
+            start=1
+        ):
+
+            location = result["path"]
+
+            if result.get("page"):
+                location += (
+                    f" · Page {result['page']}"
+                )
+
+            preview = result["chunk"][:900]
+
+            if len(result["chunk"]) > 900:
+                preview += "..."
+
+            safe_location = html.escape(
+                location
+            )
+
+            safe_preview = html.escape(
+                preview
+            )
+
+            with st.container(
+                border=True
+            ):
+                st.markdown(
+                    f"""
+                    <div class="evidence-title">{number}. {safe_location}</div>
+                    <div class="evidence-meta">Semantic relevance · {result["score"]:.3f}</div>
+                    <div class="evidence-code">{safe_preview}</div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+if st.session_state.indexed_files:
+
+    with st.expander(
+        "📂 View indexed files"
+    ):
+
+        for filename in st.session_state.indexed_files:
+
+            st.write(
+                f"• {filename}"
+            )
 
 render_footer()

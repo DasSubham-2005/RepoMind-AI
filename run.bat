@@ -1,3 +1,3 @@
 @echo off
 call venv\Scripts\activate
-streamlit run app.py
+python -m streamlit run app.py
