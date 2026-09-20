@@ -2178,7 +2178,7 @@ if not st.session_state.authenticated:
 
                 full_name = st.text_input(
                     "Full name",
-                    placeholder="Subham Das",
+                    placeholder=" your name",
                     key="register_name",
                 )
 
